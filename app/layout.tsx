@@ -4,11 +4,11 @@ import { Toaster } from 'react-hot-toast';
 import ClientProviders from '@/components/auth/ClientProviders';
 
 export const metadata: Metadata = {
-  title: 'Steinz Labs - Web3 Intelligence Platform',
+  title: 'Naka Labs - Web3 Intelligence Platform',
   description: 'Next-generation Web3 intelligence: AI-powered trading, whale tracking, wallet DNA analysis, and token security scanning.',
   keywords: ['DeFi', 'Web3', 'crypto trading', 'whale tracker', 'token scanner', 'blockchain analytics'],
   openGraph: {
-    title: 'Steinz Labs',
+    title: 'Naka Labs',
     description: 'Web3 Intelligence Platform',
     type: 'website',
   },

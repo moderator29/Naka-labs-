@@ -1,14 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount } from 'thirdweb/react';
 import { Briefcase, Plus, TrendingUp, TrendingDown, RefreshCw, ExternalLink } from 'lucide-react';
 import { formatUSD, formatPercent, formatAddress, formatNumber } from '@/lib/utils/formatters';
 import { usePortfolioStore } from '@/stores/portfolioStore';
 import Link from 'next/link';
 
 export default function PortfolioPage() {
-  const { authenticated, user, getAccessToken } = usePrivy();
+  const account = useActiveAccount();
+  const authenticated = !!account;
   const { holdings, totalValue, unrealizedPL, setHoldings, setLoading, isLoading } = usePortfolioStore();
   const [walletInput, setWalletInput] = useState('');
   const [trackedWallets, setTrackedWallets] = useState<string[]>([]);
@@ -16,21 +17,18 @@ export default function PortfolioPage() {
   const [sortBy, setSortBy] = useState<'value' | 'change' | 'balance'>('value');
 
   useEffect(() => {
-    if (user?.wallet?.address) {
-      setTrackedWallets([user.wallet.address]);
-      setSelectedWallet(user.wallet.address);
-      fetchPortfolio(user.wallet.address);
+    if (account?.address) {
+      setTrackedWallets([account.address]);
+      setSelectedWallet(account.address);
+      fetchPortfolio(account.address);
     }
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [user?.wallet?.address]);
+  }, [account?.address]);
 
   async function fetchPortfolio(walletAddress: string) {
     setLoading(true);
     try {
-      const token = authenticated ? await getAccessToken() : null;
-      const res = await fetch(`/api/portfolio?address=${walletAddress}`, {
-        headers: token ? { Authorization: `Bearer ${token}` } : {},
-      });
+      const res = await fetch(`/api/portfolio?address=${walletAddress}`);
       const data = await res.json();
       if (data.holdings) {
         setHoldings(data.holdings);

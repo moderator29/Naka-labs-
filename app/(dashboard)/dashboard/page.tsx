@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount } from 'thirdweb/react';
 import Link from 'next/link';
 import { TrendingUp, TrendingDown, Zap, Shield, Dna, BarChart2, ArrowRight, Activity } from 'lucide-react';
 import { formatUSD, formatPercent, formatAddress } from '@/lib/utils/formatters';
@@ -22,12 +22,13 @@ const QUICK_ACTIONS = [
 ];
 
 export default function DashboardPage() {
-  const { user, authenticated } = usePrivy();
+  const account = useActiveAccount();
+  const authenticated = !!account;
+  const walletAddress = account?.address;
   const [marketData, setMarketData] = useState<MarketStat[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    // Fetch top market data
     fetch('/api/market/chart?type=overview')
       .then((r) => r.json())
       .then((d) => {
@@ -37,8 +38,6 @@ export default function DashboardPage() {
       .catch(() => setLoading(false));
   }, []);
 
-  const walletAddress = user?.wallet?.address;
-
   return (
     <div className="p-6 space-y-6">
       {/* Welcome */}
@@ -47,7 +46,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-white">
             {authenticated
               ? `Welcome back${walletAddress ? ', ' + formatAddress(walletAddress, 6) : ''}!`
-              : 'Welcome to Steinz Labs'}
+              : 'Welcome to Naka Labs'}
           </h1>
           <p className="text-text-secondary text-sm mt-1">
             Your Web3 intelligence hub — {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}

@@ -1,15 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyPrivyToken, getAuthTokenFromRequest } from '@/lib/privy-server';
 import { TREASURY_WALLET_EVM, TREASURY_WALLET_SOLANA, TRADING_FEE_FREE } from '@/lib/constants';
 
 export async function POST(req: NextRequest) {
-  const authToken = getAuthTokenFromRequest(req);
-  if (!authToken) {
-    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-  }
-
   try {
-    const claims = await verifyPrivyToken(authToken);
     const body = await req.json();
     const { side, fromToken, toToken, amount, chain, slippage, userAddress, limitPrice, orderType } = body;
 
@@ -29,7 +22,6 @@ export async function POST(req: NextRequest) {
         const inputDecimals = fromToken === 'USDC' ? 6 : 9;
         const inputAmount = Math.floor(amountAfterFee * Math.pow(10, inputDecimals));
 
-        // Get Jupiter quote
         const quoteRes = await fetch(
           `https://quote-api.jup.ag/v6/quote?inputMint=${inputMint}&outputMint=${outputMint}&amount=${inputAmount}&slippageBps=${Math.floor(slippage * 100)}`
         );
@@ -39,7 +31,6 @@ export async function POST(req: NextRequest) {
           return NextResponse.json({ error: 'No route found for this swap' }, { status: 400 });
         }
 
-        // Get swap transaction
         const swapRes = await fetch('https://quote-api.jup.ag/v6/swap', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
@@ -53,8 +44,6 @@ export async function POST(req: NextRequest) {
         const swapData = await swapRes.json();
 
         if (swapData.swapTransaction) {
-          // In production: return transaction for wallet to sign
-          // The client-side code handles signing via Privy embedded wallet
           return NextResponse.json({
             success: true,
             transaction: swapData.swapTransaction,
@@ -70,10 +59,6 @@ export async function POST(req: NextRequest) {
       }
     }
 
-    // For EVM trades: return transaction for signing
-    // In production, integrate ParaSwap or 0x Protocol
-    // Fee transfer to treasury is included in the transaction
-
     // Simulate successful trade (demo mode)
     const mockTxHash = `0x${Array.from({ length: 64 }, () => Math.floor(Math.random() * 16).toString(16)).join('')}`;
 
@@ -88,7 +73,7 @@ export async function POST(req: NextRequest) {
       feeUSD: fee,
       treasuryWallet: treasury,
       chain,
-      userId: claims.userId,
+      userId: userAddress,
       timestamp: new Date().toISOString(),
     });
   } catch (error) {

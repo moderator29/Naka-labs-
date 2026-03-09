@@ -1,7 +1,8 @@
 'use client';
 
 import { useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount, useActiveWallet, useDisconnect, useConnectModal } from 'thirdweb/react';
+import { thirdwebClient, wallets as thirdwebWallets } from '@/lib/thirdweb';
 import {
   User, Wallet, Bell, Shield, ChevronRight, Copy, CheckCircle, BarChart2,
   BadgeCheck, Settings, LogOut, ExternalLink, FileText, Eye, Sliders,
@@ -16,15 +17,22 @@ type Section = 'profile' | 'verify' | 'alerts' | 'security';
 const COUNTRIES = ['United States', 'United Kingdom', 'Canada', 'Australia', 'Germany', 'France', 'Nigeria', 'South Africa', 'Kenya', 'UAE', 'Singapore', 'Japan', 'Other'];
 
 export default function ProfilePage() {
-  const { user, authenticated, login, logout, linkWallet, getAccessToken } = usePrivy();
+  const account = useActiveAccount();
+  const activeWallet = useActiveWallet();
+  const { disconnect } = useDisconnect();
+  const { connect } = useConnectModal();
+  const authenticated = !!account;
   const [section, setSection] = useState<Section>('profile');
   const [copied, setCopied] = useState(false);
   const [alerts, setAlerts] = useState({ whale: true, price: true, security: true, newsletter: true });
   const [verifyForm, setVerifyForm] = useState({ fullName: '', country: '', idType: 'PASSPORT', telegram: '', twitter: '', reason: '' });
   const [verifyStatus, setVerifyStatus] = useState<'idle' | 'submitting' | 'submitted'>('idle');
 
-  const wallet = user?.wallet?.address;
-  const email = user?.email?.address ?? user?.google?.email ?? null;
+  function login() { connect({ client: thirdwebClient, wallets: thirdwebWallets, theme: 'dark' }); }
+  function logout() { if (activeWallet) disconnect(activeWallet); }
+
+  const wallet = account?.address;
+  const email: string | null = null;
 
   function copyAddress() {
     if (!wallet) return;
@@ -41,11 +49,10 @@ export default function ProfilePage() {
     }
     setVerifyStatus('submitting');
     try {
-      const token = await getAccessToken();
       const res = await fetch('/api/verify', {
         method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token ?? ''}` },
-        body: JSON.stringify(verifyForm),
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ ...verifyForm, userAddress: wallet }),
       });
       const data = await res.json();
       if (data.success) {
@@ -85,7 +92,7 @@ export default function ProfilePage() {
             <User size={36} className="text-[#00aaff]" />
           </div>
           <h2 className="text-xl font-bold text-white mb-0.5">
-            {user?.email?.address?.split('@')[0] ?? formatAddress(wallet ?? '0x000') ?? 'Trader'}
+            {formatAddress(wallet ?? '0x000') ?? 'Trader'}
           </h2>
           <div className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-[#0d0d1a] border border-white/[0.06] text-[#8892a4] text-xs mb-4">
             <div className="w-1.5 h-1.5 rounded-full bg-[#4a5568]" />
@@ -339,7 +346,7 @@ export default function ProfilePage() {
       {/* Link additional wallet */}
       {!wallet && (
         <div className="px-5 mb-6">
-          <button onClick={() => linkWallet()} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-dashed border-[#0066ff]/30 text-[#0066ff] text-sm font-semibold hover:bg-[#0066ff]/5 transition-all">
+          <button onClick={login} className="w-full flex items-center justify-center gap-2 py-3.5 rounded-2xl border border-dashed border-[#0066ff]/30 text-[#0066ff] text-sm font-semibold hover:bg-[#0066ff]/5 transition-all">
             <Wallet size={16} />
             Link a wallet
           </button>

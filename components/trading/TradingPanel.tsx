@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePrivy, useWallets } from '@privy-io/react-auth';
+import { useActiveAccount } from 'thirdweb/react';
 import toast from 'react-hot-toast';
 import { Settings, Info, RefreshCw } from 'lucide-react';
 import { TokenInfo } from '@/stores/tradingStore';
@@ -21,8 +21,8 @@ const QUICK_AMOUNTS = [25, 50, 100, 500];
 const SLIPPAGE_OPTIONS = [0.5, 1, 3, 5];
 
 export default function TradingPanel({ token, limitPrice, onLimitPriceChange }: TradingPanelProps) {
-  const { authenticated, user, getAccessToken } = usePrivy();
-  const { wallets } = useWallets();
+  const account = useActiveAccount();
+  const authenticated = !!account;
   const [side, setSide] = useState<Side>('buy');
   const [orderType, setOrderType] = useState<OrderType>('market');
   const [amount, setAmount] = useState('');
@@ -93,15 +93,11 @@ export default function TradingPanel({ token, limitPrice, onLimitPriceChange }: 
     const toastId = toast.loading(`Executing ${side.toUpperCase()} order...`);
 
     try {
-      const authToken = await getAccessToken();
       const treasury = token.chain === 'SOLANA' ? TREASURY_WALLET_SOLANA : TREASURY_WALLET_EVM;
 
       const res = await fetch('/api/trade/execute', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-          Authorization: `Bearer ${authToken}`,
-        },
+        headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           side,
           orderType,
@@ -111,7 +107,7 @@ export default function TradingPanel({ token, limitPrice, onLimitPriceChange }: 
           limitPrice: orderType === 'limit' ? parseFloat(price) : undefined,
           chain: token.chain,
           slippage,
-          userAddress: user?.wallet?.address,
+          userAddress: account?.address,
           treasuryWallet: treasury,
         }),
       });

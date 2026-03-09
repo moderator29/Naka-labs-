@@ -1,22 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { verifyPrivyToken, getAuthTokenFromRequest } from '@/lib/privy-server';
 
 export async function POST(req: NextRequest) {
-  const authToken = getAuthTokenFromRequest(req);
-  if (!authToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
   try {
-    const claims = await verifyPrivyToken(authToken);
     const body = await req.json();
+    const { fullName, country, idType, telegram, twitter, reason, userAddress } = body;
 
-    const { fullName, country, idType, telegram, twitter, reason } = body;
     if (!fullName || !country || !idType) {
       return NextResponse.json({ error: 'Missing required fields' }, { status: 400 });
     }
 
+    if (!userAddress) {
+      return NextResponse.json({ error: 'Wallet not connected' }, { status: 401 });
+    }
+
     // In production: save to Supabase and notify admin
     const submission = {
-      userId: claims.userId,
+      userId: userAddress,
       fullName,
       country,
       idType,
@@ -38,14 +37,8 @@ export async function POST(req: NextRequest) {
 }
 
 export async function GET(req: NextRequest) {
-  const authToken = getAuthTokenFromRequest(req);
-  if (!authToken) return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-
-  try {
-    const claims = await verifyPrivyToken(authToken);
-    // In production: query Supabase for this user's verification status
-    return NextResponse.json({ userId: claims.userId, status: 'NONE' });
-  } catch {
-    return NextResponse.json({ status: 'NONE' });
-  }
+  const address = req.nextUrl.searchParams.get('address');
+  if (!address) return NextResponse.json({ status: 'NONE' });
+  // In production: query Supabase for this user's verification status
+  return NextResponse.json({ userId: address, status: 'NONE' });
 }

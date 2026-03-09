@@ -1,7 +1,7 @@
 'use client';
 
 import { useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount } from 'thirdweb/react';
 import { Bell, Plus, Trash2, ToggleLeft, ToggleRight, AlertTriangle } from 'lucide-react';
 
 interface Alert {
@@ -18,7 +18,8 @@ interface Alert {
 }
 
 export default function AlertsPage() {
-  const { authenticated } = usePrivy();
+  const account = useActiveAccount();
+  const authenticated = !!account;
   const [alerts, setAlerts] = useState<Alert[]>([
     {
       id: '1',

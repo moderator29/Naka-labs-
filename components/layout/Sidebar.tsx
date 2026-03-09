@@ -51,7 +51,7 @@ export default function Sidebar() {
           SL
         </div>
         {!collapsed && (
-          <span className="text-white font-bold text-lg tracking-tight">Steinz Labs</span>
+          <span className="text-white font-bold text-lg tracking-tight">Naka Labs</span>
         )}
       </div>
 
