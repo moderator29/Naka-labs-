@@ -1,7 +1,9 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import PrivyProvider from '@/components/auth/PrivyProvider';
+import dynamic from 'next/dynamic';
 import { Toaster } from 'react-hot-toast';
+
+const PrivyProvider = dynamic(() => import('@/components/auth/PrivyProvider'), { ssr: false });
 
 export const metadata: Metadata = {
   title: 'Steinz Labs - Web3 Intelligence Platform',
