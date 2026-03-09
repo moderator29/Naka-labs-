@@ -17,7 +17,7 @@ const nextConfig: NextConfig = {
   turbopack: {},
 
   // Server components external packages (correct key for Next.js 16)
-  serverExternalPackages: ['@prisma/client', 'prisma'],
+  serverExternalPackages: ['@prisma/client', 'prisma', '@coinbase/cdp-sdk', 'bs58'],
 
   // Headers for security
   async headers() {
