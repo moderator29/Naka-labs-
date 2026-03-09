@@ -1,0 +1,329 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================
+// USERS & AUTH
+// ============================================
+
+model User {
+  id          String  @id @default(cuid())
+  privyId     String  @unique
+  email       String? @unique
+  username    String  @unique
+  avatar      String?
+  bio         String?
+  twitter     String?
+  telegram    String?
+  tier        Tier    @default(FREE)
+  nakaBalance Float   @default(0)
+  verified    Boolean @default(false)
+  role        Role    @default(USER)
+
+  wallets    Wallet[]
+  portfolios Portfolio[]
+  trades     Trade[]
+  signals    Signal[]
+  alerts     Alert[]
+  watchlists Watchlist[]
+  following  Follow[]    @relation("Following")
+  followers  Follow[]    @relation("Followers")
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum Tier {
+  FREE
+  BRONZE
+  SILVER
+  GOLD
+}
+
+enum Role {
+  USER
+  ADMIN
+}
+
+// ============================================
+// WALLETS
+// ============================================
+
+model Wallet {
+  id         String  @id @default(cuid())
+  userId     String
+  user       User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  address    String
+  chain      Chain
+  isEmbedded Boolean @default(false)
+  label      String?
+
+  createdAt DateTime @default(now())
+
+  @@unique([userId, address, chain])
+}
+
+enum Chain {
+  ETHEREUM
+  SOLANA
+  BASE
+  ARBITRUM
+  POLYGON
+  BSC
+  AVALANCHE
+  OPTIMISM
+  BLAST
+  ZKSYNC
+  SCROLL
+}
+
+// ============================================
+// PORTFOLIO
+// ============================================
+
+model Portfolio {
+  id            String  @id @default(cuid())
+  userId        String
+  user          User    @relation(fields: [userId], references: [id], onDelete: Cascade)
+  walletAddress String
+  chain         Chain
+  holdings      Holding[]
+  totalValue    Float   @default(0)
+  unrealizedPL  Float   @default(0)
+  realizedPL    Float   @default(0)
+  lastUpdated   DateTime @default(now())
+
+  @@unique([userId, walletAddress, chain])
+}
+
+model Holding {
+  id            String    @id @default(cuid())
+  portfolioId   String
+  portfolio     Portfolio @relation(fields: [portfolioId], references: [id], onDelete: Cascade)
+  tokenAddress  String
+  tokenSymbol   String
+  tokenName     String
+  tokenDecimals Int
+  balance       Float
+  valueUSD      Float
+  costBasis     Float?
+  priceUSD      Float
+  change24h     Float    @default(0)
+  lastUpdated   DateTime @default(now())
+
+  @@unique([portfolioId, tokenAddress])
+}
+
+// ============================================
+// TRADING
+// ============================================
+
+model Trade {
+  id             String      @id @default(cuid())
+  userId         String
+  user           User        @relation(fields: [userId], references: [id], onDelete: Cascade)
+  type           TradeType
+  fromToken      String
+  toToken        String
+  fromAmount     Float
+  toAmount       Float
+  chain          Chain
+  priceUSD       Float
+  fee            Float
+  feeUSD         Float
+  treasuryWallet String
+  txHash         String?
+  status         TradeStatus @default(PENDING)
+  errorMessage   String?
+  dex            String?
+  slippage       Float       @default(0.5)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+enum TradeType {
+  BUY
+  SELL
+  SWAP
+}
+
+enum TradeStatus {
+  PENDING
+  CONFIRMED
+  FAILED
+}
+
+// ============================================
+// CONTEXT FEED SIGNALS
+// ============================================
+
+model Signal {
+  id           String     @id @default(cuid())
+  type         SignalType
+  chain        Chain
+  tokenAddress String
+  tokenSymbol  String
+  tokenName    String
+  tokenLogo    String?
+  title        String
+  summary      String
+  amount       Float?
+  amountUSD    Float?
+  trustScore   Int
+  walletAddress String?
+  proofData    Json
+  txHash       String?
+  likes        Int        @default(0)
+  shares       Int        @default(0)
+  views        Int        @default(0)
+  aiAnalysis   String?
+  riskLevel    RiskLevel?
+  createdAt    DateTime   @default(now())
+  expiresAt    DateTime?
+  userId       String?
+  user         User?      @relation(fields: [userId], references: [id])
+}
+
+enum SignalType {
+  BUY
+  SELL
+  WHALE_MOVEMENT
+  DEV_ACTIVITY
+  LIQUIDITY_ADD
+  NEW_POOL
+  UNUSUAL_VOLUME
+  SMART_MONEY
+  RUG_PULL_WARNING
+}
+
+enum RiskLevel {
+  LOW
+  MEDIUM
+  HIGH
+  CRITICAL
+}
+
+// ============================================
+// DNA ANALYSIS
+// ============================================
+
+model DNAAnalysis {
+  id            String   @id @default(cuid())
+  walletAddress String   @unique
+  chain         Chain
+  profileType   String
+  riskScore     Int
+  winRate       Float
+  avgHoldTime   Int
+  totalTrades   Int
+  totalVolume   Float
+  firstSeen     DateTime
+  lastActive    DateTime
+  topTokens     Json
+  topChains     Json
+  redFlags      String[]
+  rawData       Json
+  lastUpdated   DateTime @default(now())
+}
+
+// ============================================
+// SECURITY SCANS
+// ============================================
+
+model SecurityScan {
+  id                   String    @id @default(cuid())
+  contractAddress      String    @unique
+  chain                Chain
+  symbol               String
+  name                 String
+  overallScore         Int
+  riskLevel            RiskLevel
+  isHoneypot           Boolean   @default(false)
+  ownershipRenounced   Boolean   @default(false)
+  liquidityLocked      Boolean   @default(false)
+  isProxy              Boolean   @default(false)
+  hasMintFunction      Boolean   @default(false)
+  hasBlacklist         Boolean   @default(false)
+  tradingEnabled       Boolean   @default(true)
+  buyTax               Float     @default(0)
+  sellTax              Float     @default(0)
+  totalLiquidity       Float
+  holderCount          Int
+  top10Concentration   Float
+  compiler             String?
+  verified             Boolean   @default(false)
+  holderData           Json
+  lastUpdated          DateTime  @default(now())
+}
+
+// ============================================
+// WATCHLISTS & ALERTS
+// ============================================
+
+model Watchlist {
+  id     String          @id @default(cuid())
+  userId String
+  user   User            @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name   String
+  tokens WatchlistToken[]
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model WatchlistToken {
+  id          String    @id @default(cuid())
+  watchlistId String
+  watchlist   Watchlist @relation(fields: [watchlistId], references: [id], onDelete: Cascade)
+  tokenAddress String
+  chain       Chain
+  addedAt     DateTime  @default(now())
+
+  @@unique([watchlistId, tokenAddress, chain])
+}
+
+model Alert {
+  id           String    @id @default(cuid())
+  userId       String
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  name         String
+  type         AlertType
+  tokenAddress String?
+  chain        Chain?
+  condition    String
+  target       Float?
+  notifyInApp  Boolean   @default(true)
+  notifyEmail  Boolean   @default(false)
+  active       Boolean   @default(true)
+  lastTriggered DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+enum AlertType {
+  PRICE
+  VOLUME
+  WHALE
+  NEW_POOL
+}
+
+// ============================================
+// SOCIAL
+// ============================================
+
+model Follow {
+  id          String @id @default(cuid())
+  followerId  String
+  follower    User   @relation("Following", fields: [followerId], references: [id], onDelete: Cascade)
+  followingId String
+  following   User   @relation("Followers", fields: [followingId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+
+  @@unique([followerId, followingId])
+}
