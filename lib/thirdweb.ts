@@ -12,6 +12,9 @@ export const wallets = [
     },
   }),
   createWallet('io.metamask'),
+  createWallet('com.trustwallet.app'),
   createWallet('com.coinbase.wallet'),
   createWallet('me.rainbow'),
+  createWallet('com.exodus'),
+  createWallet('walletConnect'),
 ];

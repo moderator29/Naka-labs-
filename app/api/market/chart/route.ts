@@ -16,10 +16,16 @@ const CG_IDS: Record<string, string> = {
 };
 
 const INTERVAL_DAYS: Record<string, number> = {
+  // legacy
   '1m': 1, '5m': 1, '15m': 2, '1h': 7, '4h': 30, '1D': 365, '1W': 730,
+  // new display labels (mapped to same underlying resolution)
+  '1H': 1, '4H': 7, '1M': 365, '1Y': 730,
 };
 const INTERVAL_SECS: Record<string, number> = {
+  // legacy
   '1m': 60, '5m': 300, '15m': 900, '1h': 3600, '4h': 14400, '1D': 86400, '1W': 604800,
+  // new display labels
+  '1H': 3600, '4H': 14400, '1M': 86400, '1Y': 604800,
 };
 
 // ── CoinGecko OHLC ──
@@ -90,7 +96,10 @@ export async function GET(req: NextRequest) {
   const search = sp.get('search');
   const symbol = (sp.get('symbol') ?? 'BTC').toUpperCase();
 
-  const resMap: Record<string, string> = { '1m':'1','5m':'5','15m':'15','1h':'60','4h':'240','1D':'D','1W':'W' };
+  const resMap: Record<string, string> = {
+    '1m':'1','5m':'5','15m':'15','1h':'60','4h':'240','1D':'D','1W':'W',
+    '1H':'60','4H':'240','1M':'D','1Y':'W',
+  };
   const days = INTERVAL_DAYS[interval] ?? 7;
   const secs = INTERVAL_SECS[interval] ?? 3600;
 

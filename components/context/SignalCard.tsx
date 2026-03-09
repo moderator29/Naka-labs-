@@ -95,8 +95,11 @@ export default function SignalCard({ signal }: SignalCardProps) {
   const riskConf = RISK_CONFIG[riskKey] ?? RISK_CONFIG.MEDIUM;
   const chainShort = signal.chain === 'SOLANA' ? 'SOL' : signal.chain === 'ETHEREUM' ? 'ETH' : signal.chain.slice(0, 4);
 
+  // "View Proof" links to the full token page
+  const tokenPageHref = `/token/${signal.tokenAddress}?chain=${signal.chain}`;
+
   return (
-    <div className="bg-[#12172A] border border-white/8 rounded-2xl overflow-hidden hover:border-white/15 hover:shadow-[0_0_24px_rgba(10,30,255,0.15)] transition-all duration-200">
+    <div className="bg-[#0D1A2B] border border-white/[0.07] rounded-2xl overflow-hidden hover:border-[#1B4FFF]/30 hover:shadow-[0_0_28px_rgba(27,79,255,0.12)] transition-all duration-200">
       <div className="p-4 flex flex-col gap-3">
         {/* Row 1: badges + timestamp + bookmark */}
         <div className="flex items-center gap-2 flex-wrap">
@@ -178,10 +181,10 @@ export default function SignalCard({ signal }: SignalCardProps) {
               {riskConf.label}
             </span>
           </div>
-          {/* View Proof */}
+          {/* View Proof — links to full token page */}
           <Link
-            href={`/context/${signal.id}`}
-            className="text-[12px] font-semibold whitespace-nowrap transition-colors"
+            href={tokenPageHref}
+            className="text-[12px] font-bold whitespace-nowrap transition-colors hover:opacity-80"
             style={{ color: '#A855F7' }}
           >
             View Proof →
