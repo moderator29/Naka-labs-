@@ -41,7 +41,7 @@ body {
   background-attachment: fixed;
 }
 
-/* Dune.com-inspired mesh grid overlay */
+/* Steinz dark mesh grid overlay */
 body::before {
   content: '';
   position: fixed;
