@@ -398,7 +398,7 @@ function StatsTab({ token }: { token: TokenInfoExtended | null }) {
   ];
   return (
     <div className="overflow-y-auto">
-      {rows.map(({ label, value, isChange, format }) => (
+      {rows.map(({ label, value, isChange }) => (
         <div key={label} className="flex items-center justify-between px-4 py-3 border-b border-white/5 hover:bg-white/2 transition-colors">
           <span className="text-[13px] text-white/50">{label}</span>
           <span className={`text-[13px] font-semibold ${isChange ? (value >= 0 ? 'text-[#00C874]' : 'text-[#FF4444]') : 'text-white'}`}>
@@ -406,6 +406,89 @@ function StatsTab({ token }: { token: TokenInfoExtended | null }) {
           </span>
         </div>
       ))}
+    </div>
+  );
+}
+
+// ─── Key Stats Tab ──────────────────────────────────────────────
+const KEY_STATS_MOCK: Record<string, {
+  liquidity: number; fdv: number; supply: string; holders: number;
+  buys5m: number; sells5m: number; buys1h: number; sells1h: number; buys24h: number; sells24h: number;
+  age: string; txns24h: number; priceImpact: number; poolCreated: string;
+}> = {
+  SOL:  { liquidity: 200_000_000, fdv: 42_000_000_000, supply: '579M', holders: 1_840_000, buys5m: 128, sells5m: 74, buys1h: 1840, sells1h: 1230, buys24h: 38_200, sells24h: 29_100, age: '5y 8m', txns24h: 67_300, priceImpact: 0.02, poolCreated: 'Mar 2020' },
+  BTC:  { liquidity: 2_000_000_000, fdv: 1_390_000_000_000, supply: '21M', holders: 46_000_000, buys5m: 2840, sells5m: 1920, buys1h: 48_200, sells1h: 38_100, buys24h: 1_200_000, sells24h: 980_000, age: '15y 2m', txns24h: 2_180_000, priceImpact: 0.001, poolCreated: 'Jan 2009' },
+  ETH:  { liquidity: 800_000_000, fdv: 235_000_000_000, supply: '120M', holders: 102_000_000, buys5m: 1240, sells5m: 860, buys1h: 18_600, sells1h: 14_200, buys24h: 448_000, sells24h: 370_000, age: '9y 7m', txns24h: 818_000, priceImpact: 0.003, poolCreated: 'Jul 2015' },
+  HYPE: { liquidity: 45_000_000, fdv: 15_000_000_000, supply: '1B', holders: 128_000, buys5m: 84, sells5m: 31, buys1h: 1020, sells1h: 640, buys24h: 24_200, sells24h: 18_100, age: '5m', txns24h: 42_300, priceImpact: 0.08, poolCreated: 'Oct 2024' },
+  DEFAULT: { liquidity: 8_000_000, fdv: 900_000_000, supply: '500M', holders: 42_000, buys5m: 42, sells5m: 28, buys1h: 480, sells1h: 320, buys24h: 11_400, sells24h: 9_200, age: '8m', txns24h: 20_600, priceImpact: 0.15, poolCreated: 'Jul 2024' },
+};
+
+function KeyStatsTab({ token }: { token: TokenInfoExtended | null }) {
+  if (!token) return null;
+  const stats = KEY_STATS_MOCK[token.symbol] ?? KEY_STATS_MOCK.DEFAULT;
+  const totalBuys24h = stats.buys24h + stats.sells24h;
+  const buyPct = Math.round((stats.buys24h / totalBuys24h) * 100);
+
+  const grid1 = [
+    { label: 'Liquidity',  value: fmt(stats.liquidity),              color: '' },
+    { label: 'Market Cap', value: fmt(token.marketCap),              color: '' },
+    { label: 'FDV',        value: fmt(stats.fdv),                    color: '' },
+    { label: 'Supply',     value: stats.supply,                      color: '' },
+    { label: '5m Vol',     value: fmt(token.volume5m ?? 0),          color: '' },
+    { label: '24h Vol',    value: fmt(token.volume24h),              color: '' },
+    { label: '1h %',       value: fmtPct(token.change1h ?? 0),       color: (token.change1h ?? 0) >= 0 ? '#00C874' : '#FF4444' },
+    { label: '24h %',      value: fmtPct(token.change24h),           color: token.change24h >= 0 ? '#00C874' : '#FF4444' },
+    { label: 'Holders',    value: stats.holders.toLocaleString(),    color: '' },
+    { label: 'Txns 24H',   value: stats.txns24h.toLocaleString(),    color: '' },
+    { label: 'Age',        value: stats.age,                         color: '' },
+    { label: 'Pool',       value: stats.poolCreated,                 color: '' },
+  ];
+
+  return (
+    <div className="overflow-y-auto h-full">
+      {/* Stats grid 4-col */}
+      <div className="grid grid-cols-4 gap-px bg-white/5 border-b border-white/5">
+        {grid1.map(({ label, value, color }) => (
+          <div key={label} className="bg-[#0D1117] px-3 py-2.5 flex flex-col gap-0.5">
+            <span className="text-[9px] text-white/28 uppercase tracking-widest font-semibold">{label}</span>
+            <span className="text-[12px] font-mono font-semibold" style={{ color: color || 'rgba(255,255,255,0.8)' }}>{value}</span>
+          </div>
+        ))}
+      </div>
+
+      {/* Buy / Sell pressure */}
+      <div className="px-3 py-2.5 border-b border-white/5">
+        <div className="flex items-center justify-between mb-1.5">
+          <span className="text-[10px] text-white/30 uppercase tracking-wider font-semibold">Buy/Sell Pressure (24H)</span>
+          <span className="text-[10px] text-white/30">{stats.buys24h.toLocaleString()}B / {stats.sells24h.toLocaleString()}S</span>
+        </div>
+        <div className="flex h-2 rounded-full overflow-hidden gap-px">
+          <div className="bg-[#00C874] transition-all duration-700" style={{ width: `${buyPct}%`, boxShadow: '0 0 6px #00C87460' }} />
+          <div className="bg-[#FF4444] flex-1" style={{ boxShadow: '0 0 6px #FF444460' }} />
+        </div>
+        <div className="flex justify-between mt-1">
+          <span className="text-[10px] font-bold text-[#00C874]">{buyPct}% Buys</span>
+          <span className="text-[10px] font-bold text-[#FF4444]">{100 - buyPct}% Sells</span>
+        </div>
+      </div>
+
+      {/* Txn timeframes */}
+      <div className="grid grid-cols-3 gap-px bg-white/5">
+        {[
+          { tf: '5m', buys: stats.buys5m, sells: stats.sells5m },
+          { tf: '1h', buys: stats.buys1h, sells: stats.sells1h },
+          { tf: '24h', buys: stats.buys24h, sells: stats.sells24h },
+        ].map(({ tf, buys, sells }) => (
+          <div key={tf} className="bg-[#0D1117] px-3 py-2.5">
+            <div className="text-[9px] text-white/28 uppercase tracking-wider font-semibold mb-1.5">{tf} Txns</div>
+            <div className="flex items-center gap-1.5">
+              <span className="text-[11px] font-bold text-[#00C874]">{buys >= 1000 ? `${(buys/1000).toFixed(1)}K` : buys}B</span>
+              <span className="text-white/20 text-[10px]">/</span>
+              <span className="text-[11px] font-bold text-[#FF4444]">{sells >= 1000 ? `${(sells/1000).toFixed(1)}K` : sells}S</span>
+            </div>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
@@ -557,7 +640,7 @@ function MarketPageInner() {
   const [tokens]       = useState<TokenInfoExtended[]>(MOCK_TOKENS);
   const [category, setCategory] = useState('All');
   const [chartView, setChartView] = useState<'chart' | 'bubblemap'>('chart');
-  const [bottomTab, setBottomTab] = useState('Portfolio');
+  const [bottomTab, setBottomTab] = useState('Key Stats');
   const [showFilters, setShowFilters]     = useState(false);
   const [mobileSide, setMobileSide]       = useState<'buy' | 'sell' | null>(null);
   const [showSearchOverlay, setShowSearchOverlay] = useState(false);
@@ -589,10 +672,11 @@ function MarketPageInner() {
   }
 
   const BOTTOM_TABS = [
+    { id: 'Key Stats',     icon: BarChart2 },
     { id: 'Portfolio',     icon: PieChart },
     { id: 'Trade History', icon: History },
     { id: 'Trades',        icon: Activity },
-    { id: 'Stats',         icon: BarChart2 },
+    { id: 'Stats',         icon: Layers },
   ];
 
   return (
@@ -780,6 +864,7 @@ function MarketPageInner() {
               ))}
             </div>
             <div style={{ height: 152 }} className="overflow-y-auto">
+              {bottomTab === 'Key Stats'     && <KeyStatsTab token={token} />}
               {bottomTab === 'Portfolio'     && <PortfolioTab connected={!!account} />}
               {bottomTab === 'Stats'         && <StatsTab token={token} />}
               {(bottomTab === 'Trade History' || bottomTab === 'Trades') && (

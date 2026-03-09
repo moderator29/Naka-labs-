@@ -77,7 +77,7 @@ function TokenIcon({ symbol, logoUrl, size = 40 }: { symbol: string; logoUrl?: s
 }
 
 /* ── Allocation Donut ──────────────────────────────────── */
-function AllocationDonut({ holdings }: { holdings: typeof DEMO_HOLDINGS }) {
+function AllocationDonut({ holdings }: { holdings: Array<{ tokenSymbol: string; valueUSD: number; logoUrl?: string }> }) {
   const total = holdings.reduce((s, h) => s + h.valueUSD, 0);
   if (total === 0) return null;
 
