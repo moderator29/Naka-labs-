@@ -6,9 +6,15 @@ import { useRouter } from 'next/navigation';
 export default function PrivyProvider({ children }: { children: React.ReactNode }) {
   const router = useRouter();
 
+  const appId = process.env.NEXT_PUBLIC_PRIVY_APP_ID;
+
+  if (!appId) {
+    return <>{children}</>;
+  }
+
   return (
     <Privy
-      appId={process.env.NEXT_PUBLIC_PRIVY_APP_ID!}
+      appId={appId}
       config={{
         loginMethods: ['wallet', 'email', 'google', 'twitter'],
         appearance: {
