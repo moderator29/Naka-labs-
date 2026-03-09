@@ -1,18 +1,25 @@
 'use client';
 
 import { useState } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount, useActiveWallet, useDisconnect, useConnectModal } from 'thirdweb/react';
+import { thirdwebClient, wallets as thirdwebWallets } from '@/lib/thirdweb';
 import { Settings, Wallet, Bell, Shield, User, Copy, CheckCircle } from 'lucide-react';
 import { formatAddress } from '@/lib/utils/formatters';
 import { TIER_REQUIREMENTS } from '@/lib/constants';
 import toast from 'react-hot-toast';
 
 export default function SettingsPage() {
-  const { user, authenticated, login, logout, linkWallet } = usePrivy();
+  const account = useActiveAccount();
+  const activeWallet = useActiveWallet();
+  const { disconnect } = useDisconnect();
+  const { connect } = useConnectModal();
+  const authenticated = !!account;
+  const walletAddress = account?.address;
   const [copied, setCopied] = useState(false);
   const [activeTab, setActiveTab] = useState<'profile' | 'wallets' | 'notifications' | 'security'>('profile');
 
-  const walletAddress = user?.wallet?.address;
+  function login() { connect({ client: thirdwebClient, wallets: thirdwebWallets, theme: 'dark' }); }
+  function logout() { if (activeWallet) disconnect(activeWallet); }
 
   function copyAddress() {
     if (!walletAddress) return;
@@ -88,7 +95,7 @@ export default function SettingsPage() {
                       <label className="text-xs text-text-secondary mb-1 block">Display Name</label>
                       <input
                         type="text"
-                        defaultValue={user?.email?.address?.split('@')[0] ?? 'Anonymous'}
+                        defaultValue={walletAddress ? walletAddress.slice(0, 8) : 'Anonymous'}
                         className="w-full bg-bg-tertiary border border-border-default rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-neon-blue"
                       />
                     </div>
@@ -96,7 +103,7 @@ export default function SettingsPage() {
                       <label className="text-xs text-text-secondary mb-1 block">Email</label>
                       <input
                         type="email"
-                        defaultValue={user?.email?.address ?? ''}
+                        defaultValue=""
                         className="w-full bg-bg-tertiary border border-border-default rounded-lg px-3 py-2.5 text-white text-sm focus:outline-none focus:border-neon-blue"
                       />
                     </div>
@@ -158,7 +165,7 @@ export default function SettingsPage() {
                 )}
 
                 <button
-                  onClick={() => linkWallet()}
+                  onClick={login}
                   className="w-full py-3 border border-border-default rounded-xl text-sm text-text-secondary hover:text-white hover:border-neon-blue transition-colors flex items-center justify-center gap-2"
                 >
                   <Wallet size={16} />

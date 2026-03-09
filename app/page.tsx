@@ -1,11 +1,12 @@
 'use client';
 
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount, useConnectModal } from 'thirdweb/react';
 import Link from 'next/link';
 import {
   Zap, Shield, BarChart2, Dna, TrendingUp, Users,
   ArrowRight, CheckCircle, Star
 } from 'lucide-react';
+import { thirdwebClient, wallets } from '@/lib/thirdweb';
 
 const FEATURES = [
   {
@@ -56,7 +57,13 @@ const TIERS = [
 ];
 
 export default function LandingPage() {
-  const { login, authenticated } = usePrivy();
+  const account = useActiveAccount();
+  const { connect } = useConnectModal();
+  const authenticated = !!account;
+
+  function login() {
+    connect({ client: thirdwebClient, wallets, theme: 'dark' });
+  }
 
   return (
     <div className="min-h-screen bg-bg-primary">

@@ -1,17 +1,31 @@
 'use client';
 
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount, useActiveWallet, useDisconnect, useConnectModal } from 'thirdweb/react';
 import { Bell, Search, ChevronDown } from 'lucide-react';
 import Link from 'next/link';
 import { formatAddress } from '@/lib/utils/formatters';
 import { useState } from 'react';
+import { thirdwebClient, wallets } from '@/lib/thirdweb';
 
 export default function Navbar() {
-  const { authenticated, user, login, logout } = usePrivy();
+  const account = useActiveAccount();
+  const activeWallet = useActiveWallet();
+  const { disconnect } = useDisconnect();
+  const { connect } = useConnectModal();
   const [showDropdown, setShowDropdown] = useState(false);
 
-  const walletAddress = user?.wallet?.address;
-  const displayName = user?.email?.address || (walletAddress ? formatAddress(walletAddress) : '');
+  const authenticated = !!account;
+  const walletAddress = account?.address;
+  const displayName = walletAddress ? formatAddress(walletAddress) : '';
+
+  function login() {
+    connect({ client: thirdwebClient, wallets, theme: 'dark' });
+  }
+
+  function logout() {
+    if (activeWallet) disconnect(activeWallet);
+    setShowDropdown(false);
+  }
 
   return (
     <header className="h-14 bg-bg-secondary border-b border-border-default flex items-center px-6 gap-4 flex-shrink-0">
@@ -76,7 +90,7 @@ export default function Navbar() {
                     Settings
                   </Link>
                   <button
-                    onClick={() => { logout(); setShowDropdown(false); }}
+                    onClick={logout}
                     className="w-full text-left px-3 py-2 text-sm text-bingo-orange hover:bg-bg-tertiary rounded-lg transition-colors"
                   >
                     Disconnect

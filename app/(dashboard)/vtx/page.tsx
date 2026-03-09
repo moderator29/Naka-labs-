@@ -2,7 +2,8 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { Send, TrendingUp, BarChart2, Search, Shield, Cpu, Zap, ChevronRight } from 'lucide-react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount, useConnectModal } from 'thirdweb/react';
+import { thirdwebClient, wallets } from '@/lib/thirdweb';
 import ReactMarkdown from 'react-markdown';
 
 interface Message {
@@ -62,7 +63,10 @@ function MsgBubble({ msg }: { msg: Message }) {
 }
 
 export default function VTXPage() {
-  const { authenticated, login } = usePrivy();
+  const account = useActiveAccount();
+  const { connect } = useConnectModal();
+  const authenticated = !!account;
+  function login() { connect({ client: thirdwebClient, wallets, theme: 'dark' }); }
   const [messages, setMessages] = useState<Message[]>([{
     id: '0', role: 'assistant',
     content: `## Welcome to VTX Intelligence\n\nI\'m VTX — your real-time Web3 intelligence layer. I can help you:\n\n- **Analyze** tokens, wallets, and market conditions across 11 chains\n- **Track** whale movements and smart money flows  \n- **Scan** contracts for honeypots, rugs, and hidden risks\n- **Identify** alpha opportunities before they trend\n\nWhat would you like to explore?`,

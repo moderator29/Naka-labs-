@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { useActiveAccount } from 'thirdweb/react';
 import { Star, Plus, Trash2, TrendingUp, TrendingDown, Search } from 'lucide-react';
 import { formatUSD, formatPercent } from '@/lib/utils/formatters';
 import Link from 'next/link';
@@ -24,7 +24,8 @@ interface Watchlist {
 }
 
 export default function WatchlistsPage() {
-  const { authenticated } = usePrivy();
+  const account = useActiveAccount();
+  const authenticated = !!account;
   const [watchlists, setWatchlists] = useState<Watchlist[]>([
     { id: '1', name: 'My Watchlist', tokens: [] },
   ]);
