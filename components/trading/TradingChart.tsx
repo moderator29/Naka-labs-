@@ -17,113 +17,127 @@ interface TradingChartProps {
   onPriceClick?: (price: number) => void;
 }
 
-const INTERVALS = ['1m', '5m', '15m', '1h', '4h', '1D', '1W'];
+// Display labels → API interval params
+const INTERVALS: { label: string; apiInterval: string; days: number }[] = [
+  { label: '1H',  apiInterval: '1h',  days: 1   },
+  { label: '4H',  apiInterval: '4h',  days: 7   },
+  { label: '1D',  apiInterval: '1D',  days: 30  },
+  { label: '1W',  apiInterval: '1W',  days: 180 },
+  { label: '1M',  apiInterval: '1D',  days: 365 },
+];
+
+function fmtPrice(p: number): string {
+  if (p >= 10000) return p.toLocaleString('en-US', { maximumFractionDigits: 0 });
+  if (p >= 1)     return p.toFixed(2);
+  if (p >= 0.001) return p.toFixed(5);
+  return p.toFixed(8);
+}
 
 export default function TradingChart({ token, onPriceClick }: TradingChartProps) {
   const containerRef = useRef<HTMLDivElement>(null);
-  const chartRef = useRef<IChartApi | null>(null);
-  const candleRef = useRef<ISeriesApi<'Candlestick'> | null>(null);
-  const volumeRef = useRef<ISeriesApi<'Histogram'> | null>(null);
-  const [interval, setIntervalState] = useState('1h');
-  const [tokenInfo, setTokenInfo] = useState<{ price: number; change: number } | null>(null);
-  const [loading, setLoading] = useState(false);
+  const chartRef     = useRef<IChartApi | null>(null);
+  const candleRef    = useRef<ISeriesApi<'Candlestick'> | null>(null);
+  const volumeRef    = useRef<ISeriesApi<'Histogram'> | null>(null);
 
+  const [activeInterval, setActiveInterval] = useState(INTERVALS[2]); // default 1D
+  const [livePrice,  setLivePrice]  = useState<number | null>(null);
+  const [liveChange, setLiveChange] = useState<number>(0);
+  const [loading,    setLoading]    = useState(false);
+
+  // ── Init chart ──────────────────────────────────────────────
   const initChart = useCallback(() => {
     if (!containerRef.current) return;
-
-    if (chartRef.current) {
-      chartRef.current.remove();
-      chartRef.current = null;
-    }
+    if (chartRef.current) { chartRef.current.remove(); chartRef.current = null; }
 
     const chart = createChart(containerRef.current, {
-      width: containerRef.current.clientWidth,
+      width:  containerRef.current.clientWidth,
       height: containerRef.current.clientHeight,
       layout: {
         background: { color: '#0F1419' },
-        textColor: '#B4B9C5',
-        fontSize: 12,
+        textColor:  '#6E7A8E',
+        fontSize:   11,
       },
       grid: {
-        vertLines: { color: 'rgba(255, 255, 255, 0.04)', style: LineStyle.Dashed },
-        horzLines: { color: 'rgba(255, 255, 255, 0.04)', style: LineStyle.Dashed },
+        vertLines: { color: 'rgba(255,255,255,0.03)', style: LineStyle.Dashed },
+        horzLines: { color: 'rgba(255,255,255,0.03)', style: LineStyle.Dashed },
       },
       crosshair: {
-        mode: CrosshairMode.Normal,
-        vertLine: { color: 'rgba(255, 255, 255, 0.2)', width: 1, style: LineStyle.Dashed },
-        horzLine: { color: 'rgba(255, 255, 255, 0.2)', width: 1, style: LineStyle.Dashed },
+        mode:     CrosshairMode.Normal,
+        vertLine: { color: 'rgba(0,229,255,0.25)', width: 1, style: LineStyle.Dashed },
+        horzLine: { color: 'rgba(0,229,255,0.25)', width: 1, style: LineStyle.Dashed },
       },
       rightPriceScale: {
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        scaleMargins: { top: 0.1, bottom: 0.3 },
+        borderColor:  'rgba(255,255,255,0.06)',
+        scaleMargins: { top: 0.08, bottom: 0.28 },
+        textColor:    '#6E7A8E',
       },
       timeScale: {
-        borderColor: 'rgba(255, 255, 255, 0.08)',
-        timeVisible: true,
+        borderColor:    'rgba(255,255,255,0.06)',
+        timeVisible:    true,
         secondsVisible: false,
+        rightOffset:    5,
+        barSpacing:     8,
       },
-      handleScroll: { mouseWheel: true, pressedMouseMove: true },
-      handleScale: { mouseWheel: true, pinch: true },
+      handleScroll: { mouseWheel: true, pressedMouseMove: true, horzTouchDrag: true },
+      handleScale:  { mouseWheel: true, pinch: true },
     });
 
-    // lightweight-charts v5 API
     const candleSeries = chart.addSeries(CandlestickSeries, {
-      upColor: '#00E5FF',
-      downColor: '#FF6B35',
+      upColor:      '#00C874',
+      downColor:    '#FF4444',
       borderVisible: false,
-      wickUpColor: '#00E5FF',
-      wickDownColor: '#FF6B35',
+      wickUpColor:   '#00C874',
+      wickDownColor: '#FF4444',
     });
 
     const volumeSeries = chart.addSeries(HistogramSeries, {
-      color: '#26a69a',
+      color:       '#26a69a',
       priceFormat: { type: 'volume' },
       priceScaleId: 'volume',
     });
 
     chart.priceScale('volume').applyOptions({
-      scaleMargins: { top: 0.8, bottom: 0 },
+      scaleMargins: { top: 0.82, bottom: 0 },
     });
 
-    chartRef.current = chart;
+    chartRef.current  = chart;
     candleRef.current = candleSeries;
     volumeRef.current = volumeSeries;
 
+    // Click on chart → set limit price
     chart.subscribeClick((param) => {
       if (!param.point || !candleRef.current) return;
-      const priceY = param.point.y;
-      const price = candleSeries.coordinateToPrice(priceY);
-      if (price && onPriceClick) {
-        onPriceClick(price);
-      }
+      const price = candleSeries.coordinateToPrice(param.point.y);
+      if (price && onPriceClick) onPriceClick(price);
     });
 
     return chart;
   }, [onPriceClick]);
 
-  const loadChartData = useCallback(async () => {
+  // ── Load chart data ──────────────────────────────────────────
+  const loadData = useCallback(async () => {
     if (!candleRef.current || !volumeRef.current) return;
-
     setLoading(true);
     try {
       const params = new URLSearchParams({
-        interval,
-        ...(token?.address ? { address: token.address } : { symbol: 'BTC' }),
+        interval: activeInterval.apiInterval,
+        ...(token?.address && token.address.length > 6 && !token.address.startsWith('0x0')
+          ? { address: token.address }
+          : { symbol: token?.symbol ?? 'BTC' }),
         ...(token?.chainId ? { chain: token.chainId } : {}),
       });
 
-      const res = await fetch(`/api/market/chart?${params}`);
+      const res  = await fetch(`/api/market/chart?${params}`);
       const data = await res.json();
 
-      if (data.candles && data.candles.length > 0) {
+      if (data.candles?.length) {
         candleRef.current.setData(data.candles);
-        if (data.volume) volumeRef.current.setData(data.volume);
+        if (data.volume?.length) volumeRef.current.setData(data.volume);
 
-        const last = data.candles[data.candles.length - 1];
+        const last  = data.candles[data.candles.length - 1];
         const first = data.candles[0];
-        const change = ((last.close - first.open) / first.open) * 100;
-        setTokenInfo({ price: last.close, change });
-
+        setLivePrice(last.close);
+        setLiveChange(((last.close - first.open) / first.open) * 100);
         chartRef.current?.timeScale().fitContent();
       }
     } catch (err) {
@@ -131,79 +145,76 @@ export default function TradingChart({ token, onPriceClick }: TradingChartProps)
     } finally {
       setLoading(false);
     }
-  }, [token, interval]);
+  }, [token, activeInterval]);
 
+  // ── Setup / cleanup ──────────────────────────────────────────
   useEffect(() => {
     initChart();
-
-    const handleResize = () => {
+    const onResize = () => {
       if (chartRef.current && containerRef.current) {
         chartRef.current.applyOptions({
-          width: containerRef.current.clientWidth,
+          width:  containerRef.current.clientWidth,
           height: containerRef.current.clientHeight,
         });
       }
     };
-    window.addEventListener('resize', handleResize);
+    window.addEventListener('resize', onResize);
     return () => {
-      window.removeEventListener('resize', handleResize);
+      window.removeEventListener('resize', onResize);
       chartRef.current?.remove();
     };
   }, [initChart]);
 
-  useEffect(() => {
-    loadChartData();
-  }, [loadChartData]);
+  useEffect(() => { loadData(); }, [loadData]);
+
+  const displayPrice  = livePrice  ?? token?.price  ?? 0;
+  const displayChange = liveChange;
 
   return (
-    <div className="relative w-full h-full bg-bg-chart">
-      {/* Header Bar */}
-      <div className="absolute top-0 left-0 right-0 z-10 flex items-center gap-4 px-4 py-3 bg-bg-chart/80 backdrop-blur-sm border-b border-border-subtle">
+    <div className="relative w-full h-full flex flex-col bg-[#0F1419]">
+      {/* ── Chart toolbar ── */}
+      <div className="flex items-center justify-between px-3 py-2 border-b border-white/5 flex-shrink-0 bg-[#0F1419]">
+        {/* Price display */}
         <div className="flex items-center gap-3">
-          <div>
-            <div className="font-bold text-white">{token?.symbol ?? 'BTC'}/{token?.chain === 'SOLANA' ? 'SOL' : 'USDC'}</div>
-            <div className="text-xs text-text-tertiary">{token?.name ?? 'Bitcoin'}</div>
-          </div>
-          {tokenInfo && (
-            <>
-              <div className="font-mono text-lg font-bold text-white">
-                ${tokenInfo.price.toLocaleString('en-US', { maximumFractionDigits: 6 })}
-              </div>
-              <div className={`text-sm font-semibold ${tokenInfo.change >= 0 ? 'text-electric-blue' : 'text-bingo-orange'}`}>
-                {tokenInfo.change >= 0 ? '+' : ''}{tokenInfo.change.toFixed(2)}%
-              </div>
-            </>
-          )}
+          <span className="font-mono text-[15px] font-bold text-white">
+            ${fmtPrice(displayPrice)}
+          </span>
+          <span className={`text-[12px] font-semibold px-2 py-0.5 rounded-md ${
+            displayChange >= 0 ? 'text-[#00C874] bg-[#00C874]/10' : 'text-[#FF4444] bg-[#FF4444]/10'
+          }`}>
+            {displayChange >= 0 ? '+' : ''}{displayChange.toFixed(2)}%
+          </span>
         </div>
 
-        <div className="flex-1" />
-
-        <div className="flex items-center gap-1">
-          {INTERVALS.map((int) => (
+        {/* Timeframe buttons */}
+        <div className="flex items-center gap-0.5">
+          {INTERVALS.map(iv => (
             <button
-              key={int}
-              onClick={() => setIntervalState(int)}
-              className={`px-2.5 py-1 rounded text-xs font-medium transition-colors ${
-                interval === int
-                  ? 'bg-neon-blue text-white'
-                  : 'text-text-tertiary hover:text-white hover:bg-bg-tertiary'
+              key={iv.label}
+              onClick={() => setActiveInterval(iv)}
+              className={`px-2.5 py-1 rounded-lg text-[11px] font-semibold transition-all ${
+                activeInterval.label === iv.label
+                  ? 'bg-white/14 text-white ring-1 ring-white/15'
+                  : 'text-white/30 hover:text-white/60 hover:bg-white/6'
               }`}
             >
-              {int}
+              {iv.label}
             </button>
           ))}
         </div>
       </div>
 
+      {/* ── Canvas area ── */}
       {loading && (
-        <div className="absolute inset-0 z-20 flex items-center justify-center bg-bg-chart/50">
-          <div className="w-6 h-6 border-2 border-neon-blue border-t-transparent rounded-full animate-spin" />
+        <div className="absolute inset-0 z-20 flex items-center justify-center bg-[#0F1419]/70 pointer-events-none">
+          <div className="w-6 h-6 border-2 border-[#00E5FF] border-t-transparent rounded-full animate-spin" />
         </div>
       )}
 
-      <div ref={containerRef} className="w-full h-full pt-14" />
+      <div ref={containerRef} className="flex-1 min-h-0" />
 
-      <div className="absolute bottom-8 left-1/2 -translate-x-1/2 text-text-tertiary/20 text-2xl font-black pointer-events-none select-none">
+      {/* Watermark */}
+      <div className="absolute bottom-12 left-1/2 -translate-x-1/2 text-white/[0.04] text-[28px] font-black tracking-widest pointer-events-none select-none uppercase">
         STEINZ LABS
       </div>
     </div>
