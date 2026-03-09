@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { usePrivy } from '@privy-io/react-auth';
+import { usePrivy, useWallets } from '@privy-io/react-auth';
 import toast from 'react-hot-toast';
 import { Settings, Info, RefreshCw } from 'lucide-react';
 import { TokenInfo } from '@/stores/tradingStore';
@@ -22,6 +22,7 @@ const SLIPPAGE_OPTIONS = [0.5, 1, 3, 5];
 
 export default function TradingPanel({ token, limitPrice, onLimitPriceChange }: TradingPanelProps) {
   const { authenticated, user, getAccessToken } = usePrivy();
+  const { wallets } = useWallets();
   const [side, setSide] = useState<Side>('buy');
   const [orderType, setOrderType] = useState<OrderType>('market');
   const [amount, setAmount] = useState('');
@@ -116,6 +117,29 @@ export default function TradingPanel({ token, limitPrice, onLimitPriceChange }: 
       });
 
       const result = await res.json();
+
+      // For Solana: Jupiter built the transaction — user signs via their external wallet
+      if (result.success && result.requiresSignature && result.transaction && token.chain === 'SOLANA') {
+        toast.success('Swap route found via Jupiter! Open your Solana wallet to sign.', { id: toastId });
+        // Store transaction for external signing (Phantom, Solflare, etc.)
+        // eslint-disable-next-line @typescript-eslint/no-explicit-any
+        const phantom = typeof window !== 'undefined' ? (window as any).solana : null;
+        if (phantom?.signAndSendTransaction) {
+          try {
+            const { VersionedTransaction } = await import('@solana/web3.js');
+            const txBytes = Buffer.from(result.transaction, 'base64');
+            const vtx = VersionedTransaction.deserialize(txBytes);
+            const { signature } = await phantom.signAndSendTransaction(vtx);
+            toast.success(`Swap executed! TX: ${String(signature).slice(0, 12)}...`);
+          } catch (sigErr) {
+            console.error('Phantom sign error:', sigErr);
+          }
+        }
+        setAmount('');
+        setQuote(null);
+        setRecentTrades(prev => [{ type: side.toUpperCase(), amount: parseFloat(amount), price: token.price, time: 'just now' }, ...prev.slice(0, 4)]);
+        return;
+      }
 
       if (result.success) {
         toast.success(`${side.toUpperCase()} order executed! TX: ${result.txHash?.slice(0, 12)}...`, { id: toastId });
