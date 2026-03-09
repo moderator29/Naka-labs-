@@ -216,7 +216,7 @@ export default function SettingsPage() {
                       <div>
                         <div className="font-semibold text-white text-sm">Non-custodial Security</div>
                         <div className="text-xs text-text-secondary mt-1">
-                          Steinz Labs never holds your private keys. All transactions are signed in your wallet and executed on-chain.
+                          Naka Labs never holds your private keys. All transactions are signed in your wallet and executed on-chain.
                         </div>
                       </div>
                     </div>

@@ -1,8 +1,63 @@
 @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
 
-@tailwind base;
-@tailwind components;
-@tailwind utilities;
+@import "tailwindcss";
+
+@theme {
+  /* Brand Colors */
+  --color-neon-blue: #0A1EFF;
+  --color-bingo-orange: #FF6B35;
+  --color-bingo-yellow: #FFD23F;
+  --color-electric-blue: #00E5FF;
+
+  /* Backgrounds */
+  --color-bg-primary: #0A0E1A;
+  --color-bg-secondary: #141824;
+  --color-bg-tertiary: #1E2433;
+  --color-bg-elevated: #252D3F;
+  --color-bg-chart: #0F1419;
+
+  /* Text */
+  --color-text-primary: #FFFFFF;
+  --color-text-secondary: #B4B9C5;
+  --color-text-tertiary: #8B91A0;
+
+  /* Borders */
+  --color-border-subtle: rgba(255, 255, 255, 0.06);
+  --color-border-default: rgba(255, 255, 255, 0.1);
+  --color-border-strong: rgba(255, 255, 255, 0.15);
+
+  /* Font families */
+  --font-family-ui: 'Inter', sans-serif;
+  --font-family-mono: 'JetBrains Mono', monospace;
+
+  /* Animations */
+  --animate-pulse-neon: pulse-neon 2s ease-in-out infinite;
+  --animate-slide-in: slide-in 0.3s ease-out;
+  --animate-fade-in: fade-in 0.3s ease-out;
+  --animate-ticker: ticker 30s linear infinite;
+
+  /* Keyframes */
+  @keyframes pulse-neon {
+    0%, 100% { box-shadow: 0 0 5px rgba(10, 30, 255, 0.5); }
+    50% { box-shadow: 0 0 20px rgba(10, 30, 255, 0.8); }
+  }
+  @keyframes slide-in {
+    0% { transform: translateX(-100%); opacity: 0; }
+    100% { transform: translateX(0); opacity: 1; }
+  }
+  @keyframes fade-in {
+    0% { opacity: 0; transform: translateY(10px); }
+    100% { opacity: 1; transform: translateY(0); }
+  }
+  @keyframes ticker {
+    0% { transform: translateX(0); }
+    100% { transform: translateX(-50%); }
+  }
+
+  /* Box shadows */
+  --shadow-neon-blue: 0 0 20px rgba(10, 30, 255, 0.3);
+  --shadow-electric: 0 0 20px rgba(0, 229, 255, 0.3);
+}
 
 :root {
   --neon-blue: #0A1EFF;
@@ -32,7 +87,7 @@ html,
 body {
   max-width: 100vw;
   overflow-x: hidden;
-  background-color: #070712;
+  background-color: #0A0E1A;
   color: var(--text-primary);
   font-family: 'Inter', sans-serif;
   background-image:
@@ -41,7 +96,6 @@ body {
   background-attachment: fixed;
 }
 
-/* Steinz dark mesh grid overlay */
 body::before {
   content: '';
   position: fixed;
@@ -54,7 +108,6 @@ body::before {
   z-index: 0;
 }
 
-/* Safe area support for mobile bottom nav */
 .safe-area-pb {
   padding-bottom: env(safe-area-inset-bottom);
 }
@@ -108,4 +161,12 @@ body::before {
 @keyframes skeleton-loading {
   0% { background-position: 200% 0; }
   100% { background-position: -200% 0; }
+}
+
+.scrollbar-hide {
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
 }

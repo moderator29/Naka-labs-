@@ -46,7 +46,7 @@ export default function DashboardPage() {
           <h1 className="text-2xl font-bold text-white">
             {authenticated
               ? `Welcome back${walletAddress ? ', ' + formatAddress(walletAddress, 6) : ''}!`
-              : 'Welcome to Steinz Labs'}
+              : 'Welcome to Naka Labs'}
           </h1>
           <p className="text-text-secondary text-sm mt-1">
             Your Web3 intelligence hub — {new Date().toLocaleDateString('en-US', { weekday: 'long', month: 'long', day: 'numeric' })}
