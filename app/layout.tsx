@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import './globals.css';
-import PrivyProvider from '@/components/auth/PrivyProvider';
 import { Toaster } from 'react-hot-toast';
+import ClientProviders from '@/components/auth/ClientProviders';
 
 export const metadata: Metadata = {
   title: 'Steinz Labs - Web3 Intelligence Platform',
@@ -18,7 +18,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
   return (
     <html lang="en" className="dark">
       <body className="bg-bg-primary text-white antialiased">
-        <PrivyProvider>
+        <ClientProviders>
           {children}
           <Toaster
             position="top-right"
@@ -38,7 +38,7 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
               },
             }}
           />
-        </PrivyProvider>
+        </ClientProviders>
       </body>
     </html>
   );
