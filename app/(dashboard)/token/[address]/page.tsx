@@ -312,15 +312,15 @@ function BuySellSheet({ side, token, onClose }: { side: 'buy' | 'sell'; token: T
               </span>
             ) : `${isBuy ? 'Buy' : 'Sell'} ${token.symbol}`}
           </button>
-          {/* Quick swap toggle */}
+          {/* Checkprice-style swap side toggle button */}
           <button
-            onClick={() => { /* toggle side handled by parent */ }}
-            className="w-14 flex items-center justify-center rounded-2xl border-2 transition-all"
-            style={{ borderColor: isBuy ? '#00D084' : '#FF3E3E', color: isBuy ? '#00D084' : '#FF3E3E', background: 'transparent' }}>
+            onClick={onClose}
+            className="w-14 flex items-center justify-center rounded-2xl transition-all active:scale-95"
+            style={{ background: '#FF6B35', color: '#fff' }}>
             <ArrowUpDown size={20} />
           </button>
         </div>
-        <p className="text-center text-[10px] text-white/15 mt-3">0.1% fee · MEV protected · Powered by Jupiter</p>
+        <p className="text-center text-[11px] text-white/20 mt-3">0.1% fee</p>
       </div>
     </div>
   );
@@ -591,7 +591,7 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
           </div>
 
           {/* Chart area */}
-          <div className="flex-shrink-0" style={{ height: 280 }}>
+          <div className="flex-shrink-0" style={{ height: 'clamp(300px, 42vh, 420px)' }}>
             {chartView === 'chart' ? (
               <TradingChart token={tradingToken} onPriceClick={() => {}} />
             ) : (
@@ -605,14 +605,37 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
           <div className="flex items-center justify-center gap-0 px-4 py-3 border-b border-white/[0.05] flex-shrink-0" style={{ background: '#07101F' }}>
             {TIMEFRAMES.map(tf => (
               <button key={tf} onClick={() => setTimeframe(tf)}
-                className={`px-4 py-1.5 text-[12px] font-semibold rounded-xl transition-all ${
+                className={`px-3 py-1.5 text-[12px] font-semibold rounded-xl transition-all ${
                   timeframe === tf
-                    ? 'bg-[#1B4FFF]/15 text-white border border-[#1B4FFF]/30'
+                    ? 'bg-white/12 text-white border border-white/15'
                     : 'text-[#3D5270] hover:text-[#6B84A8]'
                 }`}>
                 {tf}
               </button>
             ))}
+          </div>
+
+          {/* ── Inline KEY STATS (always visible on mobile, checkprice-style) ── */}
+          <div className="lg:hidden px-4 pt-4 pb-2">
+            <div className="text-[10px] text-[#3D5270] font-bold uppercase tracking-[0.15em] mb-3">Key Stats</div>
+            <div className="grid grid-cols-3 gap-0 border border-white/[0.06] rounded-2xl overflow-hidden">
+              {[
+                { label: 'Liquidity', value: token.liquidity > 0 ? fmt(token.liquidity) : '—' },
+                { label: 'Mcap', value: token.marketCap > 0 ? fmt(token.marketCap) : '—' },
+                { label: 'FDV', value: token.fdv ? fmt(token.fdv) : token.marketCap > 0 ? fmt(token.marketCap) : '—' },
+                { label: 'Supply', value: token.supply ? fmtNum(token.supply) + 'M' : '—' },
+                { label: 'Vol 5m', value: token.volume5m ? fmt(token.volume5m) : '$0.00' },
+                { label: 'Vol 24h', value: fmt(token.volume24h) },
+                { label: '24h', value: fmtPct(token.change24h), color: token.change24h >= 0 ? '#00D084' : '#FF3E3E' },
+                { label: 'Holders', value: token.holders ? fmtNum(token.holders) : '—' },
+                { label: 'Age', value: token.age ?? '—' },
+              ].map(({ label, value, color }, i) => (
+                <div key={label} className="px-3 py-3 flex flex-col gap-0.5" style={{ background: i % 2 === 0 ? '#0A111E' : '#080F1B', borderRight: i % 3 !== 2 ? '1px solid rgba(255,255,255,0.05)' : 'none', borderBottom: i < 6 ? '1px solid rgba(255,255,255,0.05)' : 'none' }}>
+                  <span className="text-[9px] text-[#3D5270] uppercase tracking-wider font-semibold">{label}</span>
+                  <span className="text-[13px] font-bold font-mono" style={{ color: color ?? '#EEF2FF' }}>{value}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
           {/* ── Tabs: Overview / Perps / Social ───────────────── */}
@@ -952,15 +975,19 @@ export default function TokenPage({ params }: { params: Promise<{ address: strin
         </div>
       </div>
 
-      {/* ── Mobile sticky Buy/Sell bar ────────────────────────── */}
-      <div className="lg:hidden flex-shrink-0 flex gap-3 px-4 py-3 border-t border-white/[0.06]"
-        style={{ background: '#07101F' }}>
-        <button onClick={() => setBuySide('buy')}
-          className="flex-1 py-4 rounded-2xl font-black text-[15px] btn-buy">
-          Buy {token.symbol}
+      {/* ── Mobile sticky Buy/Sell bar (checkprice style) ──────── */}
+      <div className="lg:hidden flex-shrink-0 flex gap-2.5 px-4 py-3 border-t border-white/[0.05]"
+        style={{ background: '#07101F', paddingBottom: 'max(12px, env(safe-area-inset-bottom))' }}>
+        <button
+          onClick={() => setBuySide('buy')}
+          className="flex-1 py-4 rounded-2xl font-black text-[16px] transition-all active:scale-[0.97]"
+          style={{ background: 'linear-gradient(135deg,#00D084,#00B870)', color: '#000', boxShadow: '0 4px 24px #00D08440' }}>
+          Buy
         </button>
-        <button onClick={() => setBuySide('sell')}
-          className="flex-1 py-4 rounded-2xl font-black text-[15px] btn-sell">
+        <button
+          onClick={() => setBuySide('sell')}
+          className="w-24 py-4 rounded-2xl font-black text-[16px] transition-all active:scale-[0.97]"
+          style={{ background: 'rgba(255,62,62,0.15)', color: '#FF3E3E', border: '1.5px solid rgba(255,62,62,0.3)' }}>
           Sell
         </button>
       </div>
