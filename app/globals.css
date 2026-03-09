@@ -1,0 +1,89 @@
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --neon-blue: #0A1EFF;
+  --bingo-orange: #FF6B35;
+  --bingo-yellow: #FFD23F;
+  --electric-blue: #00E5FF;
+  --bg-primary: #0A0E1A;
+  --bg-secondary: #141824;
+  --bg-tertiary: #1E2433;
+  --bg-elevated: #252D3F;
+  --bg-chart: #0F1419;
+  --text-primary: #FFFFFF;
+  --text-secondary: #B4B9C5;
+  --text-tertiary: #8B91A0;
+  --border-subtle: rgba(255, 255, 255, 0.06);
+  --border-default: rgba(255, 255, 255, 0.1);
+  --border-strong: rgba(255, 255, 255, 0.15);
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+html,
+body {
+  max-width: 100vw;
+  overflow-x: hidden;
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  font-family: 'Inter', sans-serif;
+}
+
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--bg-secondary);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--bg-elevated);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--neon-blue);
+}
+
+.glow-blue { box-shadow: 0 0 20px rgba(10, 30, 255, 0.4); }
+.glow-electric { box-shadow: 0 0 20px rgba(0, 229, 255, 0.4); }
+.glow-orange { box-shadow: 0 0 20px rgba(255, 107, 53, 0.4); }
+
+.font-number { font-family: 'JetBrains Mono', monospace; }
+
+.card-hover { transition: all 0.2s ease; }
+.card-hover:hover {
+  border-color: var(--neon-blue);
+  box-shadow: 0 0 20px rgba(10, 30, 255, 0.3);
+}
+
+.text-positive { color: #00E5FF; }
+.text-negative { color: #FF6B35; }
+
+.gradient-text {
+  background: linear-gradient(135deg, #0A1EFF, #00E5FF);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
+}
+
+.skeleton {
+  background: linear-gradient(90deg, var(--bg-secondary) 25%, var(--bg-tertiary) 50%, var(--bg-secondary) 75%);
+  background-size: 200% 100%;
+  animation: skeleton-loading 1.5s infinite;
+}
+
+@keyframes skeleton-loading {
+  0% { background-position: 200% 0; }
+  100% { background-position: -200% 0; }
+}
