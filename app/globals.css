@@ -451,3 +451,27 @@ html.theme-light {
   --text-secondary: #3D5270;
   --border-default: rgba(0, 0, 0, 0.08);
 }
+
+/* ────────────────── Animation Utility Classes ─────────── */
+/* These MUST be explicit classes (not just @theme vars) for reliability */
+.animate-ticker {
+  animation: ticker 45s linear infinite;
+}
+.animate-spin-slow {
+  animation: spin-slow 8s linear infinite;
+}
+.animate-float {
+  animation: float 6s ease-in-out infinite;
+}
+.animate-pulse-neon {
+  animation: pulse-neon 2.5s ease-in-out infinite;
+}
+.animate-fade-in {
+  animation: fade-in 0.35s ease-out both;
+}
+.animate-slide-up {
+  animation: slideUp 0.25s cubic-bezier(0.16, 1, 0.3, 1) both;
+}
+.animate-fade-in-scale {
+  animation: fadeInScale 0.2s ease-out both;
+}
